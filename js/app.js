@@ -23,6 +23,12 @@ const elements = {
   btnLangEn: document.getElementById('btnLangEn'),
   btnLangIt: document.getElementById('btnLangIt'),
 
+  // Theme Toggle
+  themeToggleBtn: document.getElementById('themeToggleBtn'),
+
+  // Notification Bell
+  notifBellBtn: document.getElementById('notifBellBtn'),
+
   // Connection Badges
   shopifyBadge: document.getElementById('shopifyBadge'),
   ebayBadge: document.getElementById('ebayBadge'),
@@ -69,6 +75,8 @@ function init() {
   loadDataFromStorage();
   setupEventListeners();
   applyLanguage(appState.lang);
+  setupThemeToggle();         // NEW: Dark/Light Mode
+  setupBrowserNotifications(); // NEW: Browser Push Notifications
   renderDashboard();
   
   const initLogKey = ApiClient.isSimulationMode ? 'log_init_sandbox' : 'log_init_production';
@@ -541,6 +549,15 @@ function showNotification(message, type = "success") {
     `;
   }
   
+  // Send native browser notification for sync events
+  if (type === "success") {
+    sendBrowserNotification('✅ StockSync Lite — Sync Complete', message);
+    ringBell();
+  } else if (type === "error") {
+    sendBrowserNotification('⚠️ StockSync Lite — Sync Error', message);
+    ringBell();
+  }
+  
   setTimeout(() => {
     elements.notificationBanner.classList.remove('show');
   }, 3500);
@@ -548,3 +565,135 @@ function showNotification(message, type = "success") {
 
 // Auto-run on DOM content loaded
 document.addEventListener('DOMContentLoaded', init);
+
+// =============================================
+// FEATURE: Dark / Light Theme Toggle
+// =============================================
+
+/**
+ * Initializes the dark/light mode toggle.
+ * Reads saved preference from localStorage and applies it immediately.
+ * Persists user preference on every click.
+ */
+function setupThemeToggle() {
+  const savedTheme = localStorage.getItem('stocksync_theme') || 'dark';
+  applyTheme(savedTheme);
+
+  elements.themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    applyTheme(newTheme);
+    localStorage.setItem('stocksync_theme', newTheme);
+    addLog(`Theme switched to ${newTheme} mode.`, 'info');
+  });
+}
+
+/**
+ * Applies a theme ('dark' or 'light') to the root html element.
+ * All CSS custom properties defined under [data-theme="light"] are automatically applied.
+ */
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    elements.themeToggleBtn.title = 'Switch to dark mode';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    elements.themeToggleBtn.title = 'Switch to light mode';
+  }
+}
+
+// =============================================
+// FEATURE: Browser Push Notifications
+// =============================================
+
+/**
+ * Initializes the browser notification bell button.
+ * Updates button visual state based on current Notification.permission.
+ * Requests permission on click if not already granted or denied.
+ */
+function setupBrowserNotifications() {
+  // Notifications API not supported (e.g. file:// protocol or old browser)
+  if (!('Notification' in window)) {
+    elements.notifBellBtn.style.display = 'none';
+    return;
+  }
+
+  updateBellState(Notification.permission);
+
+  elements.notifBellBtn.addEventListener('click', async () => {
+    if (Notification.permission === 'denied') {
+      addLog('[WARN] Browser notifications are blocked. Please allow them in browser settings.', 'warning');
+      return;
+    }
+
+    if (Notification.permission === 'granted') {
+      // Show a test notification
+      sendBrowserNotification('🔔 StockSync Lite', 'Browser notifications are active!');
+      // Animate bell
+      ringBell();
+      return;
+    }
+
+    // Request permission
+    const permission = await Notification.requestPermission();
+    updateBellState(permission);
+
+    if (permission === 'granted') {
+      addLog('[INFO] Browser notifications enabled.', 'success');
+      sendBrowserNotification('🔔 StockSync Lite', 'Notifications enabled! You will be alerted on every sync.');
+    } else {
+      addLog('[WARN] Browser notification permission denied.', 'warning');
+    }
+  });
+}
+
+/**
+ * Updates the visual state of the bell button based on permission level.
+ * @param {'default'|'granted'|'denied'} permission - The current Notification.permission value.
+ */
+function updateBellState(permission) {
+  const btn = elements.notifBellBtn;
+  btn.classList.remove('notif-granted', 'notif-denied');
+
+  if (permission === 'granted') {
+    btn.classList.add('notif-granted');
+    btn.title = 'Notifications active — click to test';
+  } else if (permission === 'denied') {
+    btn.classList.add('notif-denied');
+    btn.title = 'Notifications blocked in browser settings';
+  } else {
+    btn.title = 'Click to enable browser notifications';
+  }
+}
+
+/**
+ * Sends a native browser notification if permission is granted.
+ * @param {string} title - Notification title
+ * @param {string} body  - Notification body text
+ */
+function sendBrowserNotification(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    new Notification(title, {
+      body,
+      icon: 'https://stocksync-lite.vercel.app/favicon.ico',
+      badge: 'https://stocksync-lite.vercel.app/favicon.ico',
+      tag: 'stocksync-sync',   // replaces previous notification instead of stacking
+      silent: false
+    });
+  } catch (e) {
+    // Silently fail if notifications are blocked at OS level
+  }
+}
+
+/**
+ * Triggers the CSS bell-ring animation on the bell icon.
+ */
+function ringBell() {
+  const bellIcon = document.getElementById('bellIcon');
+  bellIcon.classList.remove('bell-ring');
+  // Force reflow to restart animation
+  void bellIcon.offsetWidth;
+  bellIcon.classList.add('bell-ring');
+  setTimeout(() => bellIcon.classList.remove('bell-ring'), 800);
+}

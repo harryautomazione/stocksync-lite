@@ -6,6 +6,20 @@ Its primary unique selling point is the **Buffer Stock (Safety Stock)** system, 
 
 ---
 
+## ✨ Features
+
+| Feature | Description |
+|---|---|
+| 🔄 **Real-time Sync** | Instant Shopify → eBay inventory sync via SKU mapping |
+| 🛡️ **Buffer Stock** | Configurable safety buffer to prevent overselling |
+| 🌙 **Dark / Light Mode** | Smooth theme toggle, preference saved in localStorage |
+| 🔔 **Browser Notifications** | Native OS push alerts on every sync event |
+| 🌐 **EN / IT Localization** | Full bilingual UI, auto-detected from browser language |
+| 🖥️ **Sandbox Simulator** | Live demo mode — no API keys needed |
+| ☁️ **Serverless Ready** | One-click deploy on Vercel at $0/month |
+
+---
+
 ## 🚀 Getting Started
 
 ### 1. Instant Local Preview (Sandbox Simulator)
@@ -18,6 +32,8 @@ Since this application features an **automated Dual-Mode Client**, you can test 
     *   **Interactive Sliders**: Drag the **Buffer Stock** slider. You will see the eBay target quantity column recalculate instantly in real-time.
     *   **Manual Trigger**: Click the **Sychronize (refresh)** icon on any row to simulate an instant inventory update. Watch the developer sync logs print success messages to the live console.
     *   **Background Sales Webhooks**: Every 25 seconds, the simulator will automatically simulate a random sale on Shopify (e.g. *"Shopify sold 2 hoodies"*). It will dynamically deduct the stock on the screen, flash a visual pulse on the system status light, and automatically trigger an eBay update reflecting the new stock minus the safety buffer stock.
+    *   **🌙 Dark / Light Mode**: Click the toggle switch in the top navbar to switch between dark and light themes. The preference is saved across sessions.
+    *   **🔔 Browser Notifications**: Click the bell icon in the navbar to enable native OS notifications. You will receive a push alert on your desktop every time a sync event is triggered, even if the browser tab is in the background.
 
 ---
 
@@ -49,7 +65,7 @@ To enable live connections to your real stores, add these environment variables 
 
 ## 🛠️ Tech Stack & Architecture
 
-*   **Frontend**: HTML5, Vanilla CSS3 (Custom properties, dark theme HSL gradients, glassmorphism, responsive grid), Vanilla ES6 JavaScript (event-driven, local storage state persistence).
+*   **Frontend**: HTML5, Vanilla CSS3 (Custom properties, dark/light theme HSL gradients, glassmorphism, responsive grid), Vanilla ES6 JavaScript (event-driven, local storage state persistence, Web Notifications API).
 *   **Backend**: Node.js serverless functions (designed for Vercel/Netlify lambda environments).
 *   **Database**: Local-first state management using the browser's `localStorage`, keeping hosting costs at absolute zero.
 *   **Communication**: Event-driven webhook processing and secure OAuth token exchange.
@@ -61,3 +77,4 @@ To enable live connections to your real stores, add these environment variables 
 StockSync Lite is built with security as a priority:
 *   **No Centralized Database**: Your mapped products and configurations never leave your browser. They are stored securely in your browser's private `localStorage`.
 *   **Protected Credentials**: API Secrets and Access Tokens are never loaded or exposed to the client-side frontend browser. All communications with Shopify and eBay are signed and authorized securely inside serverless endpoints on Vercel's isolated servers.
+

@@ -6,6 +6,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
+/* =============================================
+ * DARK THEME (Default)
+ * ============================================= */
 :root {
   /* Colors */
   --bg-primary: hsl(222, 47%, 6%);
@@ -35,6 +38,43 @@
   --radius-lg: 20px;
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --max-width: 1280px;
+  
+  /* Theme icon visibility */
+  --icon-sun-opacity: 0;
+  --icon-moon-opacity: 1;
+  --theme-bg-gradient-1: hsla(263, 90%, 50%, 0.08);
+  --theme-bg-gradient-2: hsla(186, 100%, 45%, 0.05);
+}
+
+/* =============================================
+ * LIGHT THEME
+ * ============================================= */
+[data-theme="light"] {
+  --bg-primary: hsl(210, 30%, 97%);
+  --bg-secondary: hsla(210, 30%, 93%, 0.85);
+  --bg-tertiary: hsl(210, 25%, 88%);
+  
+  --accent-purple: hsl(263, 80%, 48%);
+  --accent-purple-glow: hsla(263, 80%, 48%, 0.12);
+  --accent-cyan: hsl(186, 90%, 35%);
+  --accent-cyan-glow: hsla(186, 90%, 35%, 0.12);
+  
+  --text-primary: hsl(220, 30%, 10%);
+  --text-secondary: hsl(220, 15%, 35%);
+  --text-muted: hsl(220, 10%, 55%);
+  
+  --success: hsl(142, 60%, 35%);
+  --success-glow: hsla(142, 60%, 35%, 0.12);
+  --warning: hsl(38, 85%, 42%);
+  --danger: hsl(350, 80%, 50%);
+  
+  --border-color: hsla(217, 20%, 75%, 0.7);
+  --border-glass: rgba(0, 0, 0, 0.08);
+  
+  --icon-sun-opacity: 1;
+  --icon-moon-opacity: 0;
+  --theme-bg-gradient-1: hsla(263, 80%, 48%, 0.04);
+  --theme-bg-gradient-2: hsla(186, 90%, 35%, 0.03);
 }
 
 /* Reset & Defaults */
@@ -52,9 +92,11 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(at 0% 0%, hsla(263, 90%, 50%, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, hsla(186, 100%, 45%, 0.05) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, var(--theme-bg-gradient-1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, var(--theme-bg-gradient-2) 0px, transparent 50%);
   background-attachment: fixed;
+  /* Smooth transition for ALL color changes during theme switch */
+  transition: background-color 0.4s ease, color 0.4s ease, background-image 0.4s ease;
 }
 
 /* Layout Grid */
@@ -538,6 +580,120 @@ body {
   margin-top: 1.5rem;
 }
 
+/* =============================================
+ * THEME TOGGLE BUTTON
+ * ============================================= */
+.theme-toggle-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: 50px;
+  width: 44px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
+.theme-toggle-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5px;
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.35s ease;
+  box-shadow: 0 0 8px var(--accent-cyan-glow);
+}
+
+[data-theme="light"] .theme-toggle-thumb {
+  transform: translateX(20px);
+  background: var(--accent-purple);
+  box-shadow: 0 0 8px var(--accent-purple-glow);
+}
+
+/* Notification Bell Button */
+.notif-bell-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-glass);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text-muted);
+  position: relative;
+  transition: var(--transition-smooth);
+  flex-shrink: 0;
+}
+
+.notif-bell-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
+.notif-bell-btn.notif-granted {
+  color: var(--success);
+  border-color: var(--success-glow);
+}
+
+.notif-bell-btn.notif-denied {
+  color: var(--danger);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notif-bell-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 1.5px solid var(--bg-primary);
+  display: none;
+}
+
+.notif-bell-btn.notif-granted .notif-bell-dot {
+  display: block;
+  animation: pulse 2s infinite;
+}
+
+/* Glass card & input transition for theme switching */
+.glass-card,
+.form-control,
+.modal-content,
+.integration-status,
+.table-responsive,
+.logs-container,
+.notification,
+.buffer-selector,
+.sku-table th,
+.sku-table td {
+  transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+
 /* Animations */
 @keyframes pulse {
   0% {
@@ -549,4 +705,19 @@ body {
   100% {
     box-shadow: 0 0 0 0 hsla(142, 70%, 45%, 0);
   }
+}
+
+@keyframes bell-ring {
+  0% { transform: rotate(0); }
+  10% { transform: rotate(15deg); }
+  20% { transform: rotate(-12deg); }
+  30% { transform: rotate(10deg); }
+  40% { transform: rotate(-8deg); }
+  50% { transform: rotate(5deg); }
+  60% { transform: rotate(0); }
+  100% { transform: rotate(0); }
+}
+
+.bell-ring {
+  animation: bell-ring 0.7s ease;
 }
