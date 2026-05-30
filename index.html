@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockSync Lite - Sincronizzatore di Magazzino Shopify & eBay</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="logo-section">
+        <h1>
+          <!-- Inline SVG Icon for Logo -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-cyan);">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          StockSync <span>Lite</span>
+        </h1>
+      </div>
+      
+      <div class="system-status">
+        <!-- Modern Language Selector Widget -->
+        <div style="display: flex; gap: 0.25rem; align-items: center; background: var(--bg-secondary); border: 1px solid var(--border-glass); padding: 0.25rem 0.5rem; border-radius: 20px; margin-right: 1.25rem; backdrop-filter: blur(12px);">
+          <button id="btnLangEn" style="background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.75rem; font-weight: 800; cursor: pointer; padding: 0.25rem 0.6rem; border-radius: 12px; transition: var(--transition-smooth); outline: none;">EN</button>
+          <span style="color: rgba(255,255,255,0.06); font-size: 0.75rem;">|</span>
+          <button id="btnLangIt" style="background: none; border: none; color: var(--text-muted); font-family: inherit; font-size: 0.75rem; font-weight: 800; cursor: pointer; padding: 0.25rem 0.6rem; border-radius: 12px; transition: var(--transition-smooth); outline: none;">IT</button>
+        </div>
+        
+        <div class="status-indicator">
+          <span class="status-dot active" id="sysStatusDot"></span>
+          <span id="sysStatusText" data-i18n="system_status_listening">Sistema in ascolto</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Grid Dashboard -->
+    <div class="dashboard-grid">
+      
+      <!-- Left Column: Settings and Configurations -->
+      <aside class="left-column">
+        
+        <!-- API Integrations Settings -->
+        <div class="glass-card form-group" style="margin-bottom: 2rem;">
+          <h2 class="card-title" data-i18n="api_integrations">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" height="20" width="20" y="2" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37zM17.5 6.5h.01"/>
+            </svg>
+            Integrazioni API
+          </h2>
+          
+          <!-- Shopify Connection Status -->
+          <div class="integration-status">
+            <span class="integration-brand">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#96bf48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Shopify
+            </span>
+            <span class="badge badge-disconnected" id="shopifyBadge" data-i18n="shopify_disconnected">Disconnesso</span>
+          </div>
+
+          <!-- eBay Connection Status -->
+          <div class="integration-status" style="margin-bottom: 1.5rem;">
+            <span class="integration-brand">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e53238" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 12h8M12 8v8"/>
+              </svg>
+              eBay
+            </span>
+            <span class="badge badge-disconnected" id="ebayBadge" data-i18n="ebay_disconnected">Disconnesso</span>
+          </div>
+
+          <!-- Setup Button -->
+          <button class="btn btn-secondary" id="openSettingsBtn" data-i18n="configure_credentials">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            Configura Credenziali API
+          </button>
+        </div>
+
+        <!-- Buffer Stock Control Card -->
+        <div class="glass-card">
+          <h2 class="card-title" data-i18n="safety_buffer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Scorta di Sicurezza
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;" data-i18n="buffer_description">
+            Imposta una quantità di riserva da sottrarre dallo stock sincronizzato su eBay per prevenire vendite doppie in caso di lag delle API.
+          </p>
+          
+          <div class="buffer-selector">
+            <div class="buffer-header">
+              <span data-i18n="buffer_threshold">Soglia di Buffer</span>
+              <span class="buffer-value"><span id="bufferVal">2</span> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);" data-i18n="units">Unità</span></span>
+            </div>
+            <input type="range" min="0" max="10" value="2" class="range-slider" id="bufferSlider">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+              <span data-i18n="no_buffer">0 (Nessun Buffer)</span>
+              <span>10 <span data-i18n="units">Unità</span></span>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- Right Column: Products Table & Logs -->
+      <main class="right-column" style="display: flex; flex-direction: column; gap: 2rem;">
+        
+        <!-- Products & Mappings List -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+            <h2 class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;" data-i18n="product_sku_mapping">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="9"/>
+                <rect x="14" y="3" width="7" height="5"/>
+                <rect x="14" y="12" width="7" height="9"/>
+                <rect x="3" y="16" width="7" height="5"/>
+              </svg>
+              Mappatura SKU Prodotti
+            </h2>
+            <button class="btn btn-primary" id="openAddMappingBtn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem;" data-i18n="add_mapping">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Aggiungi Mappatura
+            </button>
+          </div>
+
+          <!-- Mappings Table -->
+          <div class="table-responsive">
+            <table class="sku-table" id="skuTable">
+              <thead>
+                <tr>
+                  <th data-i18n="col_sku">Codice SKU</th>
+                  <th data-i18n="col_shopify_qty">Shopify Qty</th>
+                  <th data-i18n="col_buffer">Buffer</th>
+                  <th data-i18n="col_ebay_qty">eBay Qty (Inviata)</th>
+                  <th data-i18n="col_last_sync">Ultima Sincronizzazione</th>
+                  <th data-i18n="col_actions">Azioni</th>
+                </tr>
+              </thead>
+              <tbody id="skuTableBody">
+                <!-- Dynamic rows injected by JavaScript -->
+              </tbody>
+            </table>
+            
+            <!-- Empty state illustration -->
+            <div id="tableEmptyState" style="text-align: center; padding: 3rem 1.5rem; color: var(--text-secondary);">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="8" y1="12" x2="16" y2="12"/>
+              </svg>
+              <p style="font-weight: 600;" data-i18n="no_mapped_products">Nessun prodotto mappato</p>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;" data-i18n="empty_state_desc">Configura le API e clicca su "Aggiungi Mappatura" per iniziare.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Synchronization Log Console -->
+        <div class="glass-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;" data-i18n="sync_logs">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+              Log di Sincronizzazione
+            </h2>
+            <button class="action-btn-sm" id="clearLogsBtn" title="Pulisci log console">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="logs-container" id="logsContainer">
+            <!-- Dynamic log entries injected by JavaScript -->
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+  </div>
+
+  <!-- Notification Popup -->
+  <div class="notification" id="notificationBanner">
+    <div id="notificationIcon"></div>
+    <div id="notificationMessage">Operazione completata</div>
+  </div>
+
+  <!-- Modal: API Settings Configuration -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+      <h3 class="card-title" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-bottom: 1.5rem;" data-i18n="modal_creds_title">
+        Configura Credenziali API
+      </h3>
+      
+      <form id="apiSettingsForm">
+        
+        <!-- Shopify Credentials Section -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;" data-i18n="modal_creds_shopify_title">Shopify API</h4>
+        
+        <div class="form-group">
+          <label for="shopName" data-i18n="modal_creds_shop_label">Nome del Negozio (.myshopify.com)</label>
+          <input type="text" id="shopName" class="form-control" placeholder="es. il-tuo-negozio" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="shopifyToken" data-i18n="modal_creds_token_label">Access Token Amministratore (Admin API)</label>
+          <input type="password" id="shopifyToken" class="form-control" placeholder="shpat_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" required>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.05); margin: 1.5rem 0;">
+
+        <!-- eBay Credentials Section -->
+        <h4 style="font-size: 0.85rem; font-weight: 700; color: var(--accent-purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;" data-i18n="modal_creds_ebay_title">eBay API</h4>
+        
+        <div class="form-group">
+          <label for="ebayClientId" data-i18n="modal_creds_ebay_client_label">App ID (Client ID)</label>
+          <input type="text" id="ebayClientId" class="form-control" placeholder="Inserisci App ID" required>
+        </div>
+        <div class="form-group">
+          <label for="ebayClientSecret" data-i18n="modal_creds_ebay_secret_label">Cert ID (Client Secret)</label>
+          <input type="password" id="ebayClientSecret" class="form-control" placeholder="Inserisci Client Secret" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="ebayRefreshToken" data-i18n="modal_creds_ebay_refresh_label">User Refresh Token</label>
+          <input type="password" id="ebayRefreshToken" class="form-control" placeholder="Inserisci Refresh Token" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="closeSettingsBtn" data-i18n="modal_cancel" style="width: auto;">Annulla</button>
+          <button type="submit" class="btn btn-primary" data-i18n="modal_save" style="width: auto;">Salva e Connetti</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add SKU Mapping -->
+  <div class="modal-overlay" id="addMappingModal">
+    <div class="modal-content">
+      <h3 class="card-title" style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.5rem; margin-bottom: 1.5rem;" data-i18n="modal_add_title">
+        Aggiungi Mappatura Prodotto
+      </h3>
+      
+      <form id="addMappingForm">
+        <div class="form-group">
+          <label for="mappingSku" data-i18n="modal_add_sku_label">Codice SKU Prodotto (Master)</label>
+          <input type="text" id="mappingSku" class="form-control" placeholder="es. SCARPA-ROSSA-42" required>
+          <span style="font-size: 0.75rem; color: var(--text-muted);" data-i18n="modal_add_sku_help">Lo SKU deve essere identico sia su Shopify che su eBay.</span>
+        </div>
+        <div class="form-group">
+          <label for="shopifyProductId" data-i18n="modal_add_shpf_id_label">Shopify Product ID (o Variant ID)</label>
+          <input type="text" id="shopifyProductId" class="form-control" placeholder="es. gid://shopify/ProductVariant/123456789" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="ebayItemId" data-i18n="modal_add_ebay_id_label">eBay Item ID</label>
+          <input type="text" id="ebayItemId" class="form-control" placeholder="es. 1204895018" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="closeAddMappingBtn" data-i18n="modal_cancel" style="width: auto;">Annulla</button>
+          <button type="submit" class="btn btn-primary" data-i18n="modal_add_submit" style="width: auto;">Crea Mappatura</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Scripts -->
+  <script src="js/translations.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

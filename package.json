@@ -1,0 +1,25 @@
+{
+  "name": "stocksync-lite",
+  "version": "1.0.0",
+  "description": "Shopify & eBay Real-Time Inventory Synchronizer with Buffer Stock safety margin.",
+  "main": "index.html",
+  "scripts": {
+    "start": "echo \"Open index.html in your browser to run the application sandbox.\""
+  },
+  "dependencies": {
+    "axios": "^1.6.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "shopify",
+    "ebay",
+    "inventory",
+    "sync",
+    "buffer-stock",
+    "micro-saas"
+  ],
+  "author": "Antigravity AI",
+  "license": "MIT"
+}

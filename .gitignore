@@ -1,0 +1,19 @@
+# Local environment variables
+.env
+.env.local
+*.env
+
+# Dependency directories
+node_modules/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Project logs and temporary data
+logs/
+*.log
+data/
+datasets/
+dist/
+.vercel/
