@@ -71,7 +71,17 @@ const translations = {
     log_buffer_updated: "Buffer Stock updated to {buffer}. eBay quantities recalculated.",
     log_webhook_received: "Received Shopify order webhook for SKU {sku}. Sold {sold} pcs. Shopify stock: {old} ➔ {new}",
     log_webhook_sync: "StockSync: Automated sync completed. eBay SKU {sku} updated to {ebayQty} (Buffer: {buffer}).",
-    log_sim_creds: "Simulation: Credentials successfully saved and validated."
+    log_sim_creds: "Simulation: Credentials successfully saved and validated.",
+    stats_title: "Sync Statistics",
+    stats_last24h: "Last 24 hours",
+    kpi_syncs: "Synchronizations",
+    kpi_low_stock: "Low Stock",
+    kpi_avg_stock: "Avg Stock",
+    low_stock_title: "Low Stock Alerts",
+    low_stock_description: "Receive an automatic alert when Shopify stock drops below this threshold.",
+    low_stock_threshold_label: "Alert Threshold",
+    search_placeholder: "Search by SKU code...",
+    add_mapping_short: "Add Mapping"
   },
   it: {
     system_status_listening: "Sistema in ascolto (API Connesse)",
@@ -136,6 +146,16 @@ const translations = {
     log_buffer_updated: "Buffer Stock aggiornato a {buffer}. Quantità su eBay ricalcolate.",
     log_webhook_received: "Ricevuto ordine Shopify per SKU [{sku}]. Venduti {sold} pz. Stock Shopify: {old} ➔ {new}",
     log_webhook_sync: "StockSync: Sincronizzazione automatica eseguita. eBay SKU [{sku}] aggiornato a {ebayQty} (Buffer: {buffer}).",
-    log_sim_creds: "Simulazione: Credenziali salvate e validate con successo."
+    log_sim_creds: "Simulazione: Credenziali salvate e validate con successo.",
+    stats_title: "Statistiche Sincronizzazioni",
+    stats_last24h: "Ultime 24 ore",
+    kpi_syncs: "Sincronizzazioni",
+    kpi_low_stock: "Scorte Basse",
+    kpi_avg_stock: "Stock Medio",
+    low_stock_title: "Alert Scorte Basse",
+    low_stock_description: "Ricevi un avviso automatico quando lo stock Shopify scende sotto questa soglia.",
+    low_stock_threshold_label: "Soglia di Allerta",
+    search_placeholder: "Cerca per codice SKU...",
+    add_mapping_short: "Aggiungi"
   }
 };

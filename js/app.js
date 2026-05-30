@@ -192,6 +192,12 @@ function applyLanguage(lang) {
     el.textContent = t(key);
   });
 
+  // Translate placeholder attributes (data-i18n-placeholder)
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+
   // Dynamic values update
   renderConnectionBadges();
 }
