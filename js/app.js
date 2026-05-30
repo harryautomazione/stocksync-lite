@@ -13,8 +13,10 @@ let appState = {
   credentials: null,
   mappings: [],
   bufferValue: 2,
+  lowStockThreshold: 5,
+  syncHistory: [],   // [{hour, count}] for the chart
   logs: [],
-  lang: 'en' // Default language is English (global B2B standard)
+  lang: 'en'         // Default language is English (global B2B standard)
 };
 
 // DOM Elements
@@ -51,6 +53,17 @@ const elements = {
   // Buffer Slider
   bufferSlider: document.getElementById('bufferSlider'),
   bufferVal: document.getElementById('bufferVal'),
+
+  // Low Stock Alert Slider
+  lowStockSlider: document.getElementById('lowStockSlider'),
+  lowStockVal: document.getElementById('lowStockVal'),
+
+  // SKU Search
+  skuSearchInput: document.getElementById('skuSearchInput'),
+
+  // CSV Import
+  importCsvBtn: document.getElementById('importCsvBtn'),
+  csvFileInput: document.getElementById('csvFileInput'),
   
   // Mappings List & Modal
   openAddMappingBtn: document.getElementById('openAddMappingBtn'),
@@ -75,8 +88,12 @@ function init() {
   loadDataFromStorage();
   setupEventListeners();
   applyLanguage(appState.lang);
-  setupThemeToggle();         // NEW: Dark/Light Mode
-  setupBrowserNotifications(); // NEW: Browser Push Notifications
+  setupThemeToggle();           // Dark/Light Mode
+  setupBrowserNotifications();  // Browser Push Notifications
+  setupLowStockAlert();         // NEW: Low Stock Alert Slider
+  setupSkuSearch();             // NEW: Live SKU Search
+  setupCsvImport();             // NEW: CSV Import
+  setupStatsPanel();            // NEW: Statistics Chart
   renderDashboard();
   
   const initLogKey = ApiClient.isSimulationMode ? 'log_init_sandbox' : 'log_init_production';
@@ -111,6 +128,13 @@ function loadDataFromStorage() {
     appState.bufferValue = parseInt(savedBuffer, 10);
     elements.bufferSlider.value = appState.bufferValue;
     elements.bufferVal.textContent = appState.bufferValue;
+  }
+
+  const savedLowStock = localStorage.getItem('stocksync_lowstock');
+  if (savedLowStock) {
+    appState.lowStockThreshold = parseInt(savedLowStock, 10);
+    elements.lowStockSlider.value = appState.lowStockThreshold;
+    elements.lowStockVal.textContent = appState.lowStockThreshold;
   }
 
   const savedLang = localStorage.getItem('stocksync_lang');
@@ -242,33 +266,52 @@ function renderConnectionBadges() {
   }
 }
 
-// Re-render SKU Table
+// Re-render SKU Table (respects current search filter)
 function renderMappingsTable() {
+  const query = (elements.skuSearchInput ? elements.skuSearchInput.value.trim().toUpperCase() : '');
+  const filtered = query
+    ? appState.mappings.filter(m => m.sku.includes(query))
+    : appState.mappings;
+
   elements.skuTableBody.innerHTML = '';
   
-  if (appState.mappings.length === 0) {
+  if (filtered.length === 0) {
     elements.tableEmptyState.style.display = 'block';
     return;
   }
   
   elements.tableEmptyState.style.display = 'none';
   
-  appState.mappings.forEach((mapping, index) => {
+  filtered.forEach((mapping, index) => {
+    // Find real index in the full appState.mappings array for actions
+    const realIndex = appState.mappings.indexOf(mapping);
     const row = document.createElement('tr');
     
     // Calculate eBay Qty applying safety buffer stock
     const ebayQty = Math.max(0, mapping.shopifyQty - appState.bufferValue);
     
+    // Low stock badge
+    const isLowStock = mapping.shopifyQty <= appState.lowStockThreshold;
+    const lowStockBadge = isLowStock
+      ? `<span class="badge-low-stock">
+           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+             <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+           </svg>
+           LOW
+         </span>`
+      : '';
+    
     row.innerHTML = `
       <td>
-        <div style="font-weight: 700;">${mapping.sku}</div>
+        <div style="font-weight: 700;">${mapping.sku}${lowStockBadge}</div>
         <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;">
           Shpf: ${mapping.shopifyId.substring(0, 20)}... | eBay: ${mapping.ebayId}
         </div>
       </td>
       <td>
-        <div class="stock-value">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#96bf48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <div class="stock-value" style="${isLowStock ? 'color: var(--warning);' : ''}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isLowStock ? 'var(--warning)' : '#96bf48'}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <rect x="2" height="20" width="20" y="2" rx="5" ry="5"/>
           </svg>
           ${mapping.shopifyQty}
@@ -289,14 +332,12 @@ function renderMappingsTable() {
         ${mapping.lastSync}
       </td>
       <td class="actions-cell">
-        <button class="action-btn-sm sync-btn" data-sku="${mapping.sku}" data-index="${index}" title="Sincronizza ora">
-          <!-- Refresh icon -->
+        <button class="action-btn-sm sync-btn" data-sku="${mapping.sku}" data-index="${realIndex}" title="Sincronizza ora">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
           </svg>
         </button>
-        <button class="action-btn-sm delete-btn" data-sku="${mapping.sku}" data-index="${index}" title="Elimina mappatura" style="color: var(--danger);">
-          <!-- Trash icon -->
+        <button class="action-btn-sm delete-btn" data-sku="${mapping.sku}" data-index="${realIndex}" title="Elimina mappatura" style="color: var(--danger);">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -501,6 +542,18 @@ function simulateBackgroundActivity() {
     }), "success");
     showNotification(t('notif_sync_success'), "success");
   }, 1200);
+
+  // Check for low stock alert
+  if (product.shopifyQty <= appState.lowStockThreshold) {
+    setTimeout(() => {
+      const alertMsg = `⚠️ LOW STOCK: ${product.sku} — solo ${product.shopifyQty} unità rimaste su Shopify!`;
+      addLog(alertMsg, 'warning');
+      sendBrowserNotification('⚠️ StockSync Lite — Scorta Bassa', `${product.sku}: ${product.shopifyQty} unità rimaste`);
+    }, 1500);
+  }
+
+  // Update stats chart
+  updateStats();
 }
 
 // Modal View Utilities
@@ -600,6 +653,8 @@ function applyTheme(theme) {
     document.documentElement.removeAttribute('data-theme');
     elements.themeToggleBtn.title = 'Switch to light mode';
   }
+  // Redraw chart with updated CSS color variables
+  setTimeout(drawChart, 50);
 }
 
 // =============================================
@@ -697,3 +752,281 @@ function ringBell() {
   bellIcon.classList.add('bell-ring');
   setTimeout(() => bellIcon.classList.remove('bell-ring'), 800);
 }
+
+// =============================================
+// FEATURE: Low Stock Alert Slider
+// =============================================
+
+/**
+ * Wires up the Low Stock Alert slider.
+ * Updates appState.lowStockThreshold and persists to localStorage.
+ * Re-renders the table immediately so badges appear/disappear in real time.
+ */
+function setupLowStockAlert() {
+  elements.lowStockSlider.addEventListener('input', (e) => {
+    appState.lowStockThreshold = parseInt(e.target.value, 10);
+    elements.lowStockVal.textContent = appState.lowStockThreshold;
+    localStorage.setItem('stocksync_lowstock', appState.lowStockThreshold.toString());
+    renderMappingsTable();
+    updateStats();
+    addLog(`Low-stock alert threshold updated to ${appState.lowStockThreshold} units.`, 'info');
+  });
+}
+
+// =============================================
+// FEATURE: Live SKU Search
+// =============================================
+
+/**
+ * Wires up the SKU search input field.
+ * Filters the table in real time as the user types.
+ */
+function setupSkuSearch() {
+  elements.skuSearchInput.addEventListener('input', () => {
+    renderMappingsTable();
+  });
+}
+
+// =============================================
+// FEATURE: CSV Import
+// =============================================
+
+/**
+ * Wires up the Import CSV button and hidden file input.
+ * Expected CSV format (with header row):
+ *   sku,shopifyId,ebayId
+ *   MY-SKU-001,gid://shopify/ProductVariant/12345,987654321
+ */
+function setupCsvImport() {
+  elements.importCsvBtn.addEventListener('click', () => {
+    elements.csvFileInput.click();
+  });
+
+  elements.csvFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const result = parseCsv(ev.target.result);
+      if (result.errors.length > 0) {
+        showNotification(`CSV Error: ${result.errors[0]}`, 'error');
+        addLog(`[ERROR] CSV import failed: ${result.errors[0]}`, 'error');
+        return;
+      }
+      let imported = 0;
+      let skipped = 0;
+      result.rows.forEach(row => {
+        if (appState.mappings.some(m => m.sku === row.sku)) {
+          skipped++;
+          return;
+        }
+        appState.mappings.push({
+          sku: row.sku,
+          shopifyId: row.shopifyId,
+          ebayId: row.ebayId,
+          shopifyQty: Math.floor(Math.random() * 20) + 5,
+          lastSync: '-'
+        });
+        imported++;
+      });
+      saveState();
+      renderMappingsTable();
+      updateStats();
+      const msg = `CSV imported: ${imported} added, ${skipped} skipped (duplicate SKU).`;
+      addLog(`[INFO] ${msg}`, 'info');
+      showNotification(`${imported} mapping${imported !== 1 ? 's' : ''} importati!`, 'success');
+    };
+    reader.readAsText(file);
+    // Reset so the same file can be re-imported if needed
+    e.target.value = '';
+  });
+}
+
+/**
+ * Parses a CSV string.
+ * Supports comma and semicolon delimiters.
+ * Expected columns (case-insensitive): sku, shopifyid, ebayid
+ * @param {string} text - Raw CSV file content
+ * @returns {{ rows: Array, errors: string[] }}
+ */
+function parseCsv(text) {
+  const lines = text.trim().split(/\r?\n/).filter(l => l.trim() !== '');
+  if (lines.length < 2) {
+    return { rows: [], errors: ['File CSV vuoto o senza righe dati.'] };
+  }
+
+  // Auto-detect delimiter
+  const delimiter = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/\s/g, ''));
+
+  const skuIdx      = headers.indexOf('sku');
+  const shopifyIdx  = headers.findIndex(h => h === 'shopifyid' || h === 'shopify_id' || h === 'shopifyproductid');
+  const ebayIdx     = headers.findIndex(h => h === 'ebayid' || h === 'ebay_id' || h === 'ebayitemid');
+
+  if (skuIdx === -1 || shopifyIdx === -1 || ebayIdx === -1) {
+    return { rows: [], errors: ['Colonne richieste: sku, shopifyId, ebayId. Controlla l\'intestazione del CSV.'] };
+  }
+
+  const rows = [];
+  const errors = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+    const sku      = (cols[skuIdx]     || '').toUpperCase();
+    const shopifyId = cols[shopifyIdx] || '';
+    const ebayId    = cols[ebayIdx]    || '';
+
+    if (!sku || !shopifyId || !ebayId) {
+      errors.push(`Riga ${i + 1} ignorata: dati mancanti.`);
+      continue;
+    }
+    rows.push({ sku, shopifyId, ebayId });
+  }
+
+  return { rows, errors };
+}
+
+// =============================================
+// FEATURE: Statistics Panel (Canvas Chart)
+// =============================================
+
+/**
+ * Initializes the stats panel.
+ * Seeds syncHistory with simulated data for the last 12 hours
+ * so the chart is never empty on first load.
+ */
+function setupStatsPanel() {
+  // Seed with 12h of simulated history for a better initial visual
+  const now = new Date();
+  for (let i = 11; i >= 0; i--) {
+    const h = new Date(now);
+    h.setHours(now.getHours() - i, 0, 0, 0);
+    appState.syncHistory.push({
+      label: h.getHours() + ':00',
+      count: Math.floor(Math.random() * 8)
+    });
+  }
+  updateStats();
+
+  // Redraw chart on window resize for responsiveness
+  window.addEventListener('resize', () => drawChart());
+}
+
+/**
+ * Updates the 3 KPI counters and redraws the chart.
+ * Increments the current-hour bucket on every call.
+ */
+function updateStats() {
+  // Increment current hour bucket
+  const currentHourLabel = new Date().getHours() + ':00';
+  const bucket = appState.syncHistory.find(b => b.label === currentHourLabel);
+  if (bucket) {
+    bucket.count++;
+  } else {
+    appState.syncHistory.push({ label: currentHourLabel, count: 1 });
+    // Keep only the last 24h
+    if (appState.syncHistory.length > 24) {
+      appState.syncHistory.shift();
+    }
+  }
+
+  // KPI: total syncs in history
+  const totalSyncs = appState.syncHistory.reduce((s, b) => s + b.count, 0);
+  document.getElementById('kpiTotalSyncs').textContent = totalSyncs;
+
+  // KPI: products below low-stock threshold
+  const lowStockCount = appState.mappings.filter(m => m.shopifyQty <= appState.lowStockThreshold).length;
+  document.getElementById('kpiLowStock').textContent = lowStockCount;
+
+  // KPI: average Shopify stock across all products
+  const avg = appState.mappings.length > 0
+    ? Math.round(appState.mappings.reduce((s, m) => s + m.shopifyQty, 0) / appState.mappings.length)
+    : 0;
+  document.getElementById('kpiAvgStock').textContent = avg;
+
+  drawChart();
+}
+
+/**
+ * Draws the bar chart on the <canvas id="syncChart"> element.
+ * Uses only native Canvas 2D API — zero external dependencies.
+ */
+function drawChart() {
+  const canvas = document.getElementById('syncChart');
+  if (!canvas) return;
+
+  // Resolve CSS variable values for theming
+  const style = getComputedStyle(document.documentElement);
+  const accentCyan   = style.getPropertyValue('--accent-cyan').trim()   || '#00d4ff';
+  const accentPurple = style.getPropertyValue('--accent-purple').trim() || '#7b1ffa';
+  const textMuted    = style.getPropertyValue('--text-muted').trim()    || '#606880';
+  const borderColor  = style.getPropertyValue('--border-color').trim()  || 'rgba(100,110,140,0.4)';
+
+  // Match canvas pixel dimensions to CSS layout dimensions
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width  * window.devicePixelRatio;
+  canvas.height = rect.height * window.devicePixelRatio;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+  const W = rect.width;
+  const H = rect.height;
+  const data = appState.syncHistory;
+  const maxVal = Math.max(...data.map(d => d.count), 1);
+
+  const padLeft = 28, padRight = 8, padTop = 8, padBottom = 22;
+  const chartW = W - padLeft - padRight;
+  const chartH = H - padTop - padBottom;
+  const barCount = data.length;
+  const gap = 3;
+  const barW = (chartW - gap * (barCount - 1)) / barCount;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Draw Y axis guidelines (3 horizontal lines)
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 0.5;
+  for (let i = 1; i <= 3; i++) {
+    const y = padTop + chartH - (chartH * (i / 3));
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(W - padRight, y);
+    ctx.stroke();
+  }
+
+  // Draw bars with gradient
+  data.forEach((d, i) => {
+    const barH   = (d.count / maxVal) * chartH;
+    const x      = padLeft + i * (barW + gap);
+    const y      = padTop + chartH - barH;
+
+    // Gradient: cyan at top → purple at bottom
+    const grad = ctx.createLinearGradient(x, y, x, y + barH);
+    grad.addColorStop(0, accentCyan);
+    grad.addColorStop(1, accentPurple);
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    // Rounded top corners on bars
+    const r = Math.min(3, barW / 2, barH);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + barW - r, y);
+    ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+    ctx.lineTo(x + barW, y + barH);
+    ctx.lineTo(x, y + barH);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+
+    // X axis label (every 3 bars to avoid crowding)
+    if (i % 3 === 0) {
+      ctx.fillStyle = textMuted;
+      ctx.font = `${10 * (window.devicePixelRatio > 1 ? 0.85 : 1)}px Plus Jakarta Sans, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.fillText(d.label, x + barW / 2, H - 4);
+    }
+  });
+}
+

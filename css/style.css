@@ -581,8 +581,62 @@ body {
 }
 
 /* =============================================
- * THEME TOGGLE BUTTON
+ * STATS PANEL: KPI Boxes
  * ============================================= */
+.kpi-box {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  text-align: center;
+  transition: var(--transition-smooth);
+}
+
+.kpi-box:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan-glow);
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  line-height: 1;
+  margin-bottom: 0.35rem;
+  letter-spacing: -1px;
+}
+
+.kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Low-stock warning badge in table */
+.badge-low-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--warning);
+  background: hsla(38, 92%, 50%, 0.1);
+  border: 1px solid hsla(38, 92%, 50%, 0.25);
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+
 .theme-toggle-btn {
   background: var(--bg-secondary);
   border: 1px solid var(--border-glass);

@@ -126,30 +126,109 @@
           </div>
         </div>
 
+        <!-- Low Stock Alert Threshold Card -->
+        <div class="glass-card" style="margin-top: 2rem;">
+          <h2 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warning)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Alert Scorte Basse
+          </h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Ricevi un avviso automatico quando lo stock Shopify scende sotto questa soglia.
+          </p>
+          <div class="buffer-selector">
+            <div class="buffer-header">
+              <span>Soglia di Allerta</span>
+              <span class="buffer-value" style="color: var(--warning);"><span id="lowStockVal">5</span> <span style="font-size: 0.75rem; font-weight: 500; color: var(--text-secondary);">Unità</span></span>
+            </div>
+            <input type="range" min="1" max="20" value="5" class="range-slider" id="lowStockSlider" style="accent-color: var(--warning);">
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+              <span>1 Unità</span>
+              <span>20 Unità</span>
+            </div>
+          </div>
+        </div>
+
       </aside>
 
       <!-- Right Column: Products Table & Logs -->
       <main class="right-column" style="display: flex; flex-direction: column; gap: 2rem;">
-        
+
+        <!-- Statistics Panel -->
+        <div class="glass-card" id="statsPanel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+            <h2 class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              Statistiche Sincronizzazioni
+            </h2>
+            <span style="font-size: 0.75rem; color: var(--text-muted); background: var(--bg-tertiary); padding: 0.2rem 0.6rem; border-radius: 4px;">Ultime 24 ore</span>
+          </div>
+          <!-- KPI Row -->
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="kpi-box">
+              <div class="kpi-value" id="kpiTotalSyncs">0</div>
+              <div class="kpi-label">Sincronizzazioni</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-value" id="kpiLowStock" style="color: var(--warning);">0</div>
+              <div class="kpi-label">Scorte Basse</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-value" id="kpiAvgStock">0</div>
+              <div class="kpi-label">Stock Medio</div>
+            </div>
+          </div>
+          <!-- Chart Canvas -->
+          <canvas id="syncChart" height="110" style="width:100%; display:block;"></canvas>
+        </div>
+
         <!-- Products & Mappings List -->
         <div class="glass-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
-            <h2 class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;" data-i18n="product_sku_mapping">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="9"/>
-                <rect x="14" y="3" width="7" height="5"/>
-                <rect x="14" y="12" width="7" height="9"/>
-                <rect x="3" y="16" width="7" height="5"/>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <h2 class="card-title" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;" data-i18n="product_sku_mapping">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="7" height="9"/>
+                  <rect x="14" y="3" width="7" height="5"/>
+                  <rect x="14" y="12" width="7" height="9"/>
+                  <rect x="3" y="16" width="7" height="5"/>
+                </svg>
+                Mappatura SKU Prodotti
+              </h2>
+              <div style="display: flex; gap: 0.5rem;">
+                <!-- Import CSV Button -->
+                <button class="btn btn-secondary" id="importCsvBtn" style="width: auto; padding: 0.5rem 0.85rem; font-size: 0.8rem; gap: 0.4rem;" title="Importa mappature da file CSV">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  CSV
+                </button>
+                <button class="btn btn-primary" id="openAddMappingBtn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem;" data-i18n="add_mapping">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Aggiungi
+                </button>
+              </div>
+            </div>
+            <!-- Search Bar -->
+            <div style="position: relative;">
+              <svg style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none;" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
-              Mappatura SKU Prodotti
-            </h2>
-            <button class="btn btn-primary" id="openAddMappingBtn" style="width: auto; padding: 0.5rem 1rem; font-size: 0.85rem;" data-i18n="add_mapping">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19"/>
-                <line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Aggiungi Mappatura
-            </button>
+              <input type="text" id="skuSearchInput" class="form-control" placeholder="Cerca per codice SKU..." style="padding-left: 2.25rem; font-size: 0.85rem;">
+            </div>
           </div>
 
           <!-- Mappings Table -->
@@ -292,6 +371,9 @@
       </form>
     </div>
   </div>
+
+  <!-- Hidden CSV file input -->
+  <input type="file" id="csvFileInput" accept=".csv" style="display:none;">
 
   <!-- JavaScript Scripts -->
   <script src="js/translations.js"></script>
