@@ -21,8 +21,10 @@ Its primary unique selling point is the **Buffer Stock (Safety Stock)** system, 
 | 🌙 **Dark / Light Mode** | Smooth theme toggle, preference saved in `localStorage` |
 | 🔔 **Browser Notifications** | Native OS push alerts on every sync event |
 | 🌐 **EN / IT Localization** | Full bilingual UI, auto-detected from browser language |
+| 💾 **Data & Backup** | Export/Import full configurations (SKU mappings, API keys, preferences) as JSON for local backups and multi-device setup |
 | 🖥️ **Sandbox Simulator** | Live demo mode — no API keys needed to test |
 | ☁️ **Serverless Ready** | One-click deploy on Vercel at $0/month |
+
 
 ---
 
@@ -45,6 +47,8 @@ Since this application features an **automated Dual-Mode Client**, you can test 
     * **CSV Import**: Click the **CSV** button to bulk-import product mappings from a file.
     * **🌙 Dark / Light Mode**: Toggle in the top navbar — preference is saved across sessions.
     * **🔔 Browser Notifications**: Click the bell icon to enable native OS push alerts on every sync.
+    * **💾 Data & Backup**: Download your configuration as a `.json` backup file or restore it instantly with the import tool.
+
 
 ---
 
@@ -117,6 +121,7 @@ In your **Vercel Project Settings ➔ Environment Variables**, add:
 ## 🔒 Security & Privacy
 
 * **No Centralized Database**: Your product mappings and configurations never leave your browser. All data is stored in your browser's private `localStorage`.
+* **Zero-Fragility Backup**: Since `localStorage` can be cleared by the browser or is device-specific, the built-in **Data & Backup** system lets you export/import your configuration as a local JSON file to prevent accidental data loss and easily sync preferences across machines.
 * **Protected Credentials**: API Secrets and Access Tokens are never exposed to the client-side. All API communication with Shopify and eBay is handled exclusively inside serverless endpoints on Vercel's isolated servers.
 * **No Tracking**: StockSync Lite does not use analytics, cookies, or third-party SDKs of any kind.
 
