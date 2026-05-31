@@ -1137,6 +1137,7 @@ function importConfig(file) {
 
     setTimeout(() => {
       loadDataFromStorage();
+      applyLanguage(appState.lang);
       renderDashboard();
       updateStats();
     }, 800);
