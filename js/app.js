@@ -80,7 +80,12 @@ const elements = {
   // Banner Notification
   notificationBanner: document.getElementById('notificationBanner'),
   notificationMessage: document.getElementById('notificationMessage'),
-  notificationIcon: document.getElementById('notificationIcon')
+  notificationIcon: document.getElementById('notificationIcon'),
+
+  // Data & Backup
+  exportConfigBtn: document.getElementById('exportConfigBtn'),
+  importConfigBtn: document.getElementById('importConfigBtn'),
+  jsonConfigInput: document.getElementById('jsonConfigInput')
 };
 
 // Initialize Application
@@ -90,10 +95,11 @@ function init() {
   applyLanguage(appState.lang);
   setupThemeToggle();           // Dark/Light Mode
   setupBrowserNotifications();  // Browser Push Notifications
-  setupLowStockAlert();         // NEW: Low Stock Alert Slider
-  setupSkuSearch();             // NEW: Live SKU Search
-  setupCsvImport();             // NEW: CSV Import
-  setupStatsPanel();            // NEW: Statistics Chart
+  setupLowStockAlert();         // Low Stock Alert Slider
+  setupSkuSearch();             // Live SKU Search
+  setupCsvImport();             // CSV Import
+  setupStatsPanel();            // Statistics Chart
+  setupDataBackup();            // NEW: Export / Import JSON Config
   renderDashboard();
   
   const initLogKey = ApiClient.isSimulationMode ? 'log_init_sandbox' : 'log_init_production';
@@ -1036,3 +1042,104 @@ function drawChart() {
   });
 }
 
+// =============================================
+// FEATURE: Data & Backup (Export / Import JSON)
+// =============================================
+
+/** localStorage keys managed by StockSync Lite — all included in backup */
+const BACKUP_KEYS = [
+  'stocksync_mappings',
+  'stocksync_creds',
+  'stocksync_buffer',
+  'stocksync_lowstock',
+  'stocksync_lang'
+];
+
+/**
+ * Wires up the Export Config and Import Config buttons.
+ */
+function setupDataBackup() {
+  elements.exportConfigBtn.addEventListener('click', exportConfig);
+  elements.importConfigBtn.addEventListener('click', () => elements.jsonConfigInput.click());
+  elements.jsonConfigInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    importConfig(file);
+    e.target.value = '';
+  });
+}
+
+/**
+ * Exports all StockSync Lite localStorage data as a .json backup file.
+ * Downloaded directly by the browser — no server required.
+ */
+function exportConfig() {
+  const backup = {
+    _version: '1.0',
+    _app: 'StockSync Lite',
+    _exported_at: new Date().toISOString(),
+    data: {}
+  };
+
+  BACKUP_KEYS.forEach(key => {
+    const value = localStorage.getItem(key);
+    if (value !== null) {
+      try { backup.data[key] = JSON.parse(value); }
+      catch { backup.data[key] = value; }
+    }
+  });
+
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `stocksync-backup-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  addLog(`[BACKUP] Configuration exported: stocksync-backup-${date}.json`, 'success');
+  showNotification(t('backup_export_success'), 'success');
+}
+
+/**
+ * Imports a StockSync Lite backup JSON file and restores all settings.
+ * Validates structure before writing anything to localStorage.
+ * @param {File} file
+ */
+function importConfig(file) {
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    let backup;
+    try { backup = JSON.parse(ev.target.result); }
+    catch {
+      showNotification(t('backup_import_error'), 'error');
+      addLog('[BACKUP ERROR] Could not parse JSON file.', 'error');
+      return;
+    }
+
+    if (!backup._app || backup._app !== 'StockSync Lite' || !backup.data) {
+      showNotification(t('backup_import_error'), 'error');
+      addLog('[BACKUP ERROR] Invalid StockSync Lite backup structure.', 'error');
+      return;
+    }
+
+    Object.entries(backup.data).forEach(([key, value]) => {
+      if (BACKUP_KEYS.includes(key)) {
+        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+      }
+    });
+
+    addLog(`[BACKUP] Configuration restored (exported on ${backup._exported_at || 'unknown'}).`, 'success');
+    showNotification(t('backup_import_success'), 'success');
+
+    setTimeout(() => {
+      loadDataFromStorage();
+      renderDashboard();
+      updateStats();
+    }, 800);
+  };
+  reader.readAsText(file);
+}

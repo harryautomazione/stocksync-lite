@@ -81,7 +81,14 @@ const translations = {
     low_stock_description: "Receive an automatic alert when Shopify stock drops below this threshold.",
     low_stock_threshold_label: "Alert Threshold",
     search_placeholder: "Search by SKU code...",
-    add_mapping_short: "Add Mapping"
+    add_mapping_short: "Add Mapping",
+    backup_title: "Data & Backup",
+    backup_description: "Export your full configuration to a JSON file. Import it on any browser or machine to restore instantly.",
+    backup_export_btn: "Export Config",
+    backup_import_btn: "Import Config",
+    backup_export_success: "Configuration exported successfully.",
+    backup_import_success: "Configuration restored! Reloading dashboard...",
+    backup_import_error: "Invalid backup file. Please use a file exported from StockSync Lite."
   },
   it: {
     system_status_listening: "Sistema in ascolto (API Connesse)",
@@ -156,6 +163,13 @@ const translations = {
     low_stock_description: "Ricevi un avviso automatico quando lo stock Shopify scende sotto questa soglia.",
     low_stock_threshold_label: "Soglia di Allerta",
     search_placeholder: "Cerca per codice SKU...",
-    add_mapping_short: "Aggiungi"
+    add_mapping_short: "Aggiungi",
+    backup_title: "Dati & Backup",
+    backup_description: "Esporta la configurazione completa in un file JSON. Importala su qualsiasi browser o computer per ripristinare tutto istantaneamente.",
+    backup_export_btn: "Esporta Configurazione",
+    backup_import_btn: "Importa Configurazione",
+    backup_export_success: "Configurazione esportata con successo.",
+    backup_import_success: "Configurazione ripristinata! Ricarico il pannello...",
+    backup_import_error: "File di backup non valido. Usa un file esportato da StockSync Lite."
   }
 };
